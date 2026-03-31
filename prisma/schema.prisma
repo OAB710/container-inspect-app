@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+  fullName String @map("full_name")
+  email    String @unique
+  role     String
+
+  inspections GiamDinh[] @relation("SurveyorInspections")
+
+  @@map("user")
+}
+
+model Container {
+  id            Int    @id @default(autoincrement())
+  containerNo   String @unique @map("container_no")
+  containerType String @map("container_type")
+  containerSize Int    @map("container_size")
+  status        String
+
+  inspections GiamDinh[]
+
+  @@map("dt_container")
+}
+
+model GiamDinh {
+  id             Int      @id @default(autoincrement())
+  containerId    Int      @map("container_id")
+  surveyorId     Int      @map("surveyor_id")
+  inspectionCode String   @unique @map("inspection_code")
+  inspectionDate DateTime @map("inspection_date")
+  status         String   @default("draft")
+  result         String?
+  note           String?
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Restrict)
+  surveyor  User      @relation("SurveyorInspections", fields: [surveyorId], references: [id], onDelete: Restrict)
+  damages   HuHong[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([containerId])
+  @@index([surveyorId])
+  @@map("dt_giam_dinh")
+}
+
+model HuHong {
+  id             Int     @id @default(autoincrement())
+  giamDinhId     Int     @map("giam_dinh_id")
+  damageType     String  @map("damage_type")
+  severity       String
+  damagePosition String  @map("damage_position")
+  description    String?
+  repairMethod   String? @map("repair_method")
+
+  giamDinh GiamDinh      @relation(fields: [giamDinhId], references: [id], onDelete: Cascade)
+  images   HuHongImage[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([giamDinhId])
+  @@map("dt_hu_hong")
+}
+
+model HuHongImage {
+  id        Int    @id @default(autoincrement())
+  huHongId  Int    @map("hu_hong_id")
+  imageUrl  String @map("image_url")
+  imageName String @map("image_name")
+  sortOrder Int?   @default(0) @map("sort_order")
+
+  huHong HuHong @relation(fields: [huHongId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([huHongId])
+  @@map("dt_hu_hong_image")
+}
