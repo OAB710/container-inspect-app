@@ -23,10 +23,8 @@ export class GiamDinhController {
   }
 
   @Get()
-  findAll(
-    @Query('status') status?: string,
-    @Query('containerNo') containerNo?: string,
-  ) {
+  findAll(@Query() query: { status?: string; containerNo?: string }) {
+    const { status, containerNo } = query;
     return this.giamDinhService.findAll(status, containerNo);
   }
 
