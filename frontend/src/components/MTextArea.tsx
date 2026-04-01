@@ -48,6 +48,8 @@ const MTextArea = <T extends FieldValues>({
             multiline
             textAlignVertical="top"
             placeholderTextColor={AppColors.textSecondary}
+            textContentType="none"
+            autoComplete="off"
             style={[
               styles.input,
               disabled && styles.disabledInput,

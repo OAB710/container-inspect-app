@@ -9,8 +9,9 @@ export interface ContainerItem {
 }
 
 const containerApi = {
-  getList: (): Promise<ContainerItem[]> => {
-    return apiInstance.get('/container');
+  getList: (search?: string): Promise<ContainerItem[]> => {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiInstance.get(`/container${params}`);
   },
 };
 

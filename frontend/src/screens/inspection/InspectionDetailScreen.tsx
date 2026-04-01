@@ -1,35 +1,38 @@
-import React, { useEffect, useMemo } from 'react';
-import { Alert, Text, View } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, {useEffect, useMemo} from 'react';
+import {Alert, Text, View} from 'react-native';
+import {useForm} from 'react-hook-form';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import MainLayout from '../../components/MainLayout';
 import MButton from '../../components/MButton';
 import MStatusBadge from '../../components/MStatusBadge';
-import {
-  InspectionFormValues,
-  InspectionStatus,
-} from '../../types/inspection';
-import { InspectionStackParamList } from '../../types/navigations/inspection-navigation';
+import {InspectionFormValues, InspectionStatus} from '../../types/inspection';
+import {InspectionStackParamList} from '../../types/navigations/inspection-navigation';
 import {
   useInspectionDetail,
   useSaveInspectionDraft,
   useCompleteInspection,
 } from '../../queries/useInspection';
-import { useDamageDraftStore } from '../../stores/damageDraftStore';
+import {useDamageDraftStore} from '../../stores/damageDraftStore';
+import imageApi from '../../api/image';
+import {generateInspectionCode} from '../../utils/generateInspectionCode';
 import inspectionDetailStyle from './styles/inspection-detail.style';
 import InspectionInfoForm from './components/InspectionInfoForm';
 import DamageListSection from './components/DamageListSection';
 
-type Props = NativeStackScreenProps<InspectionStackParamList, 'InspectionDetailScreen'>;
+type Props = NativeStackScreenProps<
+  InspectionStackParamList,
+  'InspectionDetailScreen'
+>;
 
-const InspectionDetailScreen: React.FC<Props> = ({ route, navigation }) => {
+const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
   const inspectionId = route.params?.inspectionId;
-  const { data, loading, refetch } = useInspectionDetail(inspectionId);
-  const { damages, setDamages, resetDamages, removeDamage } = useDamageDraftStore();
+  const {data, loading, refetch} = useInspectionDetail(inspectionId);
+  const {damages, setDamages, resetDamages, removeDamage} =
+    useDamageDraftStore();
   const saveDraftMutation = useSaveInspectionDraft();
   const completeMutation = useCompleteInspection();
 
-  const { control, handleSubmit, reset } = useForm<InspectionFormValues>({
+  const {control, handleSubmit, reset} = useForm<InspectionFormValues>({
     defaultValues: {
       container_id: null,
       surveyor_id: null,
@@ -59,10 +62,12 @@ const InspectionDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
       setDamages(data.damages || []);
     } else {
+      // Generate inspection code for new inspection
+      const generatedCode = generateInspectionCode();
       reset({
         container_id: null,
         surveyor_id: null,
-        inspection_code: '',
+        inspection_code: generatedCode,
         inspection_date: new Date().toISOString(),
         result: '',
         note: '',
@@ -73,10 +78,80 @@ const InspectionDetailScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const onSubmit = async (values: InspectionFormValues) => {
     try {
+      // Validate that we have at least container_id and surveyor_id
+      if (!values.container_id || !values.surveyor_id) {
+        Alert.alert('Lỗi', 'Vui lòng chọn container và người giám định');
+        return;
+      }
+
+      console.log('🚀 [onSubmit] Starting save process...');
+      console.log('🚀 [onSubmit] Damages count:', damages.length);
+      console.log('🚀 [onSubmit] Damages with images:', damages.map(d => ({
+        position: d.damage_position,
+        imageCount: d.images?.length || 0,
+      })));
+
+      // First, upload all local images to Cloudinary
+      const damagesWithUploadedImages = await Promise.all(
+        damages.map(async (damage, damageIndex) => {
+          console.log(`📦 [onSubmit] Processing damage ${damageIndex + 1}...`);
+          const uploadedImages = await Promise.all(
+            (damage.images || []).map(async (img, imgIndex) => {
+              // If it's a local image (has is_local flag and uri), upload it
+              if (img.is_local && img.uri) {
+                console.log(`📸 [onSubmit] Uploading image ${imgIndex + 1} for damage ${damageIndex + 1}:`, img.fileName);
+                try {
+                  const cloudinaryUrl = await imageApi.uploadImageFile(
+                    img.uri,
+                    img.fileName || `image-${Date.now()}.jpg`,
+                    img.type || 'image/jpeg',
+                  );
+                  console.log(`✅ [onSubmit] Image ${imgIndex + 1} uploaded:`, cloudinaryUrl);
+                  return cloudinaryUrl;
+                } catch (uploadError) {
+                  console.error(`❌ [onSubmit] Failed to upload image ${imgIndex + 1}:`, uploadError);
+                  throw new Error(
+                    `Không thể upload ảnh: ${img.fileName}. Vui lòng thử lại.`,
+                  );
+                }
+              }
+              // If it's already uploaded, use the existing URL
+              console.log(`⏭️  [onSubmit] Skipping already uploaded image ${imgIndex + 1}`);
+              return img.image_url || '';
+            }),
+          );
+
+          return {
+            ...damage,
+            images: uploadedImages,
+          };
+        }),
+      );
+
+      // Transform damages to match backend API (uses camelCase)
+      const transformedDamages = damagesWithUploadedImages.map(damage => ({
+        damagePosition: damage.damage_position,
+        damageType: damage.damage_type,
+        severity: damage.severity,
+        description: damage.description,
+        repairMethod: damage.repair_method,
+        images: (damage.images || []).filter(url => !!url),
+      }));
+
+      if (transformedDamages.length === 0) {
+        Alert.alert('Lỗi', 'Vui lòng thêm ít nhất một hư hỏng');
+        return;
+      }
+
       const payload = {
         id: inspectionId,
-        ...values,
-        damages,
+        container_id: values.container_id,
+        surveyor_id: values.surveyor_id,
+        inspection_code: values.inspection_code,
+        inspection_date: values.inspection_date,
+        result: values.result,
+        note: values.note,
+        damages: transformedDamages,
       };
 
       const res = await saveDraftMutation.submit(payload);
@@ -84,12 +159,16 @@ const InspectionDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       Alert.alert('Thành công', 'Lưu giám định thành công');
 
       if (!inspectionId && res?.id) {
-        navigation.replace('InspectionDetailScreen', { inspectionId: res.id });
+        navigation.replace('InspectionDetailScreen', {inspectionId: res.id});
       } else {
         refetch();
       }
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Không thể lưu giám định');
+      console.error('Save error:', error);
+      Alert.alert(
+        'Lỗi',
+        error.message || 'Không thể lưu giám định. Kiểm tra lại dữ liệu.',
+      );
     }
   };
 

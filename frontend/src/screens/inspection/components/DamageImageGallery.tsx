@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -9,21 +9,24 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import { DamageImage } from '../../../types/inspection';
+import {DamageImage} from '../../../types/inspection';
 import AppColors from '../../../constants/app-colors';
 
 interface DamageImageGalleryProps {
   images: DamageImage[];
 }
 
-const DamageImageGallery: React.FC<DamageImageGalleryProps> = ({ images }) => {
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+const DamageImageGallery: React.FC<DamageImageGalleryProps> = ({images}) => {
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    null,
+  );
 
   if (!images || images.length === 0) {
     return null;
   }
 
-  const selectedImage = selectedImageIndex !== null ? images[selectedImageIndex] : null;
+  const selectedImage =
+    selectedImageIndex !== null ? images[selectedImageIndex] : null;
   const imageUrl = selectedImage?.image_url || selectedImage?.uri;
 
   return (
@@ -33,17 +36,18 @@ const DamageImageGallery: React.FC<DamageImageGalleryProps> = ({ images }) => {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.thumbnailScroll}
-        >
+          style={styles.thumbnailScroll}>
           {images.map((image, index) => (
             <TouchableOpacity
               key={index}
               onPress={() => setSelectedImageIndex(index)}
-              style={styles.thumbnailWrapper}
-            >
+              style={styles.thumbnailWrapper}>
               <Image
                 source={{
-                  uri: image.image_url || image.uri || 'https://via.placeholder.com/80',
+                  uri:
+                    image.image_url ||
+                    image.uri ||
+                    'https://via.placeholder.com/80',
                 }}
                 style={[
                   styles.thumbnail,
@@ -59,19 +63,17 @@ const DamageImageGallery: React.FC<DamageImageGalleryProps> = ({ images }) => {
         visible={selectedImageIndex !== null}
         transparent
         animationType="fade"
-        onRequestClose={() => setSelectedImageIndex(null)}
-      >
+        onRequestClose={() => setSelectedImageIndex(null)}>
         <View style={styles.modalBackdrop}>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setSelectedImageIndex(null)}
-          >
+            onPress={() => setSelectedImageIndex(null)}>
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
 
           {imageUrl && (
             <Image
-              source={{ uri: imageUrl }}
+              source={{uri: imageUrl}}
               style={styles.fullImage}
               resizeMode="contain"
             />
@@ -79,7 +81,9 @@ const DamageImageGallery: React.FC<DamageImageGalleryProps> = ({ images }) => {
 
           <View style={styles.imageInfo}>
             <Text style={styles.imageCounter}>
-              {selectedImageIndex !== null ? `${selectedImageIndex + 1}/${images.length}` : ''}
+              {selectedImageIndex !== null
+                ? `${selectedImageIndex + 1}/${images.length}`
+                : ''}
             </Text>
           </View>
 
@@ -94,23 +98,25 @@ const DamageImageGallery: React.FC<DamageImageGalleryProps> = ({ images }) => {
                   setSelectedImageIndex(selectedImageIndex - 1);
                 }
               }}
-              disabled={selectedImageIndex === 0}
-            >
+              disabled={selectedImageIndex === 0}>
               <Text style={styles.navButtonText}>← Trước</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.navButton,
-                selectedImageIndex === images.length - 1 && styles.navButtonDisabled,
+                selectedImageIndex === images.length - 1 &&
+                  styles.navButtonDisabled,
               ]}
               onPress={() => {
-                if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
+                if (
+                  selectedImageIndex !== null &&
+                  selectedImageIndex < images.length - 1
+                ) {
                   setSelectedImageIndex(selectedImageIndex + 1);
                 }
               }}
-              disabled={selectedImageIndex === images.length - 1}
-            >
+              disabled={selectedImageIndex === images.length - 1}>
               <Text style={styles.navButtonText}>Sau →</Text>
             </TouchableOpacity>
           </View>

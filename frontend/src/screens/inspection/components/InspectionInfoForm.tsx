@@ -1,14 +1,18 @@
 import React from 'react';
-import { Control, FieldValues } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import {Control, FieldValues} from 'react-hook-form';
+import {StyleSheet, Text, View} from 'react-native';
 import MSection from '../../../components/MSection';
 import MInput from '../../../components/MInput';
 import MTextArea from '../../../components/MTextArea';
 import MDateTime from '../../../components/MDateTime';
 import MDropdown from '../../../components/MDropdown';
-import { InspectionFormValues, Container, Surveyor } from '../../../types/inspection';
-import { useContainerOptions } from '../../../queries/useContainer';
-import { useSurveyorOptions } from '../../../queries/useSurveyor';
+import {
+  InspectionFormValues,
+  Container,
+  Surveyor,
+} from '../../../types/inspection';
+import {useContainerOptions} from '../../../queries/useContainer';
+import {useSurveyorOptions} from '../../../queries/useSurveyor';
 import AppColors from '../../../constants/app-colors';
 
 interface InspectionInfoFormProps {
@@ -34,7 +38,8 @@ const InspectionInfoForm: React.FC<InspectionInfoFormProps> = ({
         <View style={styles.readonlyField}>
           <Text style={styles.readonlyLabel}>Container</Text>
           <Text style={styles.readonlyValue}>
-            {container.container_no} - {container.container_type} ({container.container_size}ft)
+            {container.container_no} - {container.container_type} (
+            {container.container_size}ft)
           </Text>
         </View>
 
@@ -52,9 +57,9 @@ const InspectionInfoForm: React.FC<InspectionInfoFormProps> = ({
           control={control}
           name="inspection_code"
           label="Mã giám định"
-          placeholder="Nhập mã giám định"
+          placeholder="Mã được tự động tạo"
           required
-          disabled={readonly}
+          disabled={true}
           rules={{
             required: 'Vui lòng nhập mã giám định',
           }}
@@ -114,7 +119,9 @@ const InspectionInfoForm: React.FC<InspectionInfoFormProps> = ({
         name="surveyor_id"
         label="Người giám định"
         placeholder={
-          surveyorQuery.loading ? 'Đang tải người giám định...' : 'Chọn người giám định'
+          surveyorQuery.loading
+            ? 'Đang tải người giám định...'
+            : 'Chọn người giám định'
         }
         required
         disabled={readonly || surveyorQuery.loading}
@@ -128,9 +135,9 @@ const InspectionInfoForm: React.FC<InspectionInfoFormProps> = ({
         control={control}
         name="inspection_code"
         label="Mã giám định"
-        placeholder="Nhập mã giám định"
+        placeholder="Mã được tự động tạo"
         required
-        disabled={readonly}
+        disabled={true}
         rules={{
           required: 'Vui lòng nhập mã giám định',
         }}

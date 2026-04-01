@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import surveyorApi, { SurveyorItem } from '../api/surveyor';
 import { SelectOption } from '../types/common';
 
-export const useSurveyorOptions = () => {
+export const useSurveyorOptions = (search?: string) => {
   const [data, setData] = useState<SurveyorItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -11,14 +11,14 @@ export const useSurveyorOptions = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await surveyorApi.getList();
+      const res = await surveyorApi.getList(search);
       setData(res || []);
     } catch (err: any) {
       setError(err.message || 'Không tải được danh sách người giám định');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search]);
 
   useEffect(() => {
     fetchData();

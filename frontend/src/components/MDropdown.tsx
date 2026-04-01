@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import AppColors from '../constants/app-colors';
@@ -47,6 +48,13 @@ const MDropdown = <T extends FieldValues>({
   disabled = false,
 }: MDropdownProps<T>) => {
   const [visible, setVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery.trim()) return options;
+    const query = searchQuery.toLowerCase();
+    return options.filter(option => option.label.toLowerCase().includes(query));
+  }, [options, searchQuery]);
 
   return (
     <Controller
@@ -65,7 +73,10 @@ const MDropdown = <T extends FieldValues>({
 
             <Pressable
               onPress={() => {
-                if (!disabled) setVisible(true);
+                if (!disabled) {
+                  setVisible(true);
+                  setSearchQuery('');
+                }
               }}
               style={[
                 styles.input,
@@ -87,35 +98,55 @@ const MDropdown = <T extends FieldValues>({
 
             {!!error?.message && <Text style={styles.errorText}>{error.message}</Text>}
 
-            <Modal visible={visible} transparent animationType="fade">
+            <Modal
+              visible={visible}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setVisible(false)}
+            >
               <Pressable style={styles.overlay} onPress={() => setVisible(false)}>
-                <Pressable style={styles.modalCard}>
+                <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
                   <Text style={styles.modalTitle}>{label || 'Chọn dữ liệu'}</Text>
 
-                  <ScrollView showsVerticalScrollIndicator={false}>
-                    {options.map(option => {
-                      const active = option.value === value;
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Tìm kiếm..."
+                    placeholderTextColor={AppColors.textSecondary}
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    textContentType="none"
+                    autoComplete="off"
+                  />
 
-                      return (
-                        <Pressable
-                          key={option.value}
-                          style={[styles.optionItem, active && styles.optionItemActive]}
-                          onPress={() => {
-                            onChange(option.value);
-                            setVisible(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.optionText,
-                              active && styles.optionTextActive,
-                            ]}
+                  <ScrollView showsVerticalScrollIndicator={false} style={styles.optionsList}>
+                    {filteredOptions.length > 0 ? (
+                      filteredOptions.map(option => {
+                        const active = option.value === value;
+
+                        return (
+                          <Pressable
+                            key={option.value}
+                            style={[styles.optionItem, active && styles.optionItemActive]}
+                            onPress={() => {
+                              onChange(option.value);
+                              setVisible(false);
+                              setSearchQuery('');
+                            }}
                           >
-                            {option.label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+                            <Text
+                              style={[
+                                styles.optionText,
+                                active && styles.optionTextActive,
+                              ]}
+                            >
+                              {option.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })
+                    ) : (
+                      <Text style={styles.emptyText}>Không tìm thấy kết quả</Text>
+                    )}
                   </ScrollView>
                 </Pressable>
               </Pressable>
@@ -187,6 +218,19 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     marginBottom: 12,
   },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: AppColors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    fontSize: 14,
+    color: AppColors.text,
+  },
+  optionsList: {
+    maxHeight: 300,
+  },
   optionItem: {
     paddingVertical: 14,
     paddingHorizontal: 12,
@@ -203,6 +247,12 @@ const styles = StyleSheet.create({
   optionTextActive: {
     color: AppColors.primary,
     fontWeight: '700',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: AppColors.textSecondary,
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
 

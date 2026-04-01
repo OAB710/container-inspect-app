@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Delete,
   Param,
@@ -10,21 +12,27 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
 
-@Controller()
+@Controller('images')
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
 
-  @Post('damages/:damageId/images/upload')
+  @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  uploadDamageImage(
-    @Param('damageId', ParseIntPipe) damageId: number,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    return this.imagesService.uploadDamageImage(damageId, file);
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Thiếu file upload');
+    }
+
+    console.log('📥 [Controller] POST /images/upload received:', {
+      fileName: file.originalname,
+      fileSize: file.size,
+    });
+
+    return this.imagesService.uploadToCloudinary(file);
   }
 
-  @Delete('images/:imageId')
-  deleteImage(@Param('imageId', ParseIntPipe) imageId: number) {
+  @Delete(':imageId')
+  async deleteImage(@Param('imageId', ParseIntPipe) imageId: number) {
     return this.imagesService.deleteImage(imageId);
   }
 }

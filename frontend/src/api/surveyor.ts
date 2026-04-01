@@ -8,8 +8,9 @@ export interface SurveyorItem {
 }
 
 const surveyorApi = {
-  getList: (): Promise<SurveyorItem[]> => {
-    return apiInstance.get('/user/surveyors');
+  getList: (search?: string): Promise<SurveyorItem[]> => {
+    const params = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiInstance.get(`/user/surveyors${params}`);
   },
 };
 

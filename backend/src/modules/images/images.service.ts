@@ -13,6 +13,39 @@ export class ImagesService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  /**
+   * Upload file directly to Cloudinary
+   * Called from POST /images/upload endpoint
+   */
+  async uploadToCloudinary(file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Thiếu file upload');
+    }
+
+    try {
+      console.log('📸 [Images] Received file upload request:', {
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+      });
+
+      const uploaded = await this.cloudinaryService.uploadFile(
+        file,
+        'container-inspection',
+      );
+
+      console.log('📸 [Images] Upload successful:', uploaded.secure_url);
+
+      return {
+        image_url: uploaded.secure_url,
+        image_name: file.originalname,
+      };
+    } catch (error: any) {
+      console.error('❌ [Images] Upload error:', error);
+      throw new BadRequestException(`Lỗi upload ảnh: ${error.message}`);
+    }
+  }
+
   async uploadDamageImage(damageId: number, file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Thiếu file upload');

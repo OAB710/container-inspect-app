@@ -5,9 +5,24 @@ import {
   DamageItem,
 } from '../types/inspection';
 
-export interface SaveInspectionDraftPayload extends InspectionFormValues {
+export interface SendDamageItem {
+  damagePosition: string;
+  damageType: string;
+  severity: string;
+  description: string;
+  repairMethod: string;
+  images: string[];
+}
+
+export interface SaveInspectionDraftPayload {
   id?: number;
-  damages: DamageItem[];
+  container_id: string;
+  surveyor_id: string;
+  inspection_code: string;
+  inspection_date: string;
+  result: string;
+  note: string;
+  damages: SendDamageItem[];
 }
 
 const inspectionApi = {
@@ -21,9 +36,17 @@ const inspectionApi = {
 
   saveDraft: (payload: SaveInspectionDraftPayload): Promise<Inspection> => {
     if (payload.id) {
-      return apiInstance.post(`/giam-dinh/${payload.id}/save-draft`, payload);
+      return apiInstance.post(`/giam-dinh/${payload.id}/save-draft`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
-    return apiInstance.post('/giam-dinh/save-draft', payload);
+    return apiInstance.post('/giam-dinh/save-draft', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   },
 
   complete: (id: number): Promise<Inspection> => {

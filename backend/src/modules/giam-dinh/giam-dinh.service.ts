@@ -194,13 +194,15 @@ export class GiamDinhService {
 
         // Create images for this damage
         for (const imageUrl of damageDto.images) {
-          await tx.huHongImage.create({
-            data: {
-              huHongId: damage.id,
-              imageUrl,
-              imageName: imageUrl.split('/').pop() || imageUrl,
-            },
-          });
+          if (imageUrl) {
+            await tx.huHongImage.create({
+              data: {
+                huHongId: damage.id,
+                imageUrl,
+                imageName: imageUrl.split('/').pop() || imageUrl,
+              },
+            });
+          }
         }
       }
 
@@ -223,6 +225,9 @@ export class GiamDinhService {
   async completeInspection(id: number) {
     const existing = await this.prisma.giamDinh.findUnique({
       where: { id },
+      include: {
+        damages: true,
+      },
     });
 
     if (!existing) {
@@ -233,10 +238,32 @@ export class GiamDinhService {
       throw new BadRequestException('Giám định này đã completed rồi');
     }
 
+    // Validate required fields
+    if (!existing.result || !existing.note) {
+      throw new BadRequestException(
+        'Vui lòng điền đầy đủ kết quả giám định và ghi chú trước khi hoàn tất',
+      );
+    }
+
+    if (!existing.damages || existing.damages.length === 0) {
+      throw new BadRequestException(
+        'Vui lòng thêm ít nhất một hư hỏng trước khi hoàn tất',
+      );
+    }
+
     return this.prisma.giamDinh.update({
       where: { id },
       data: {
         status: 'completed',
+      },
+      include: {
+        container: true,
+        surveyor: true,
+        damages: {
+          include: {
+            images: true,
+          },
+        },
       },
     });
   }

@@ -46,6 +46,8 @@ const MInput = <T extends FieldValues>({
             onBlur={onBlur}
             editable={!disabled}
             placeholderTextColor={AppColors.textSecondary}
+            textContentType="none"
+            autoComplete="off"
             style={[
               styles.input,
               disabled && styles.disabledInput,

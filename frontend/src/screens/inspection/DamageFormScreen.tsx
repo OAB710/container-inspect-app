@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Alert } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useForm } from 'react-hook-form';
+import React, {useState} from 'react';
+import {Alert} from 'react-native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {useForm} from 'react-hook-form';
 import * as ImagePicker from 'react-native-image-picker';
 import MainLayout from '../../components/MainLayout';
 import MSection from '../../components/MSection';
@@ -10,22 +10,25 @@ import MInput from '../../components/MInput';
 import MTextArea from '../../components/MTextArea';
 import MDropdown from '../../components/MDropdown';
 import MUpload from '../../components/MUpload';
-import { DAMAGE_TYPE_OPTIONS, SEVERITY_OPTIONS } from '../../constants/app';
-import { DamageFormValues, DamageImage } from '../../types/inspection';
-import { InspectionStackParamList } from '../../types/navigations/inspection-navigation';
-import { useDamageDraftStore } from '../../stores/damageDraftStore';
+import {DAMAGE_TYPE_OPTIONS, SEVERITY_OPTIONS} from '../../constants/app';
+import {DamageFormValues, DamageImage} from '../../types/inspection';
+import {InspectionStackParamList} from '../../types/navigations/inspection-navigation';
+import {useDamageDraftStore} from '../../stores/damageDraftStore';
 
-type Props = NativeStackScreenProps<InspectionStackParamList, 'DamageFormScreen'>;
+type Props = NativeStackScreenProps<
+  InspectionStackParamList,
+  'DamageFormScreen'
+>;
 
-const DamageFormScreen: React.FC<Props> = ({ navigation, route }) => {
+const DamageFormScreen: React.FC<Props> = ({navigation, route}) => {
   const damageIndex = route.params?.damageIndex;
   const damageItem = route.params?.damageItem;
   const readonly = route.params?.readonly || false;
 
-  const { addDamage, updateDamage } = useDamageDraftStore();
+  const {addDamage, updateDamage} = useDamageDraftStore();
   const [images, setImages] = useState<DamageImage[]>(damageItem?.images || []);
 
-  const { control, handleSubmit } = useForm<DamageFormValues>({
+  const {control, handleSubmit} = useForm<DamageFormValues>({
     defaultValues: {
       damage_position: damageItem?.damage_position || '',
       damage_type: damageItem?.damage_type || '',

@@ -1,15 +1,11 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class SaveDamageDto {
+  @IsString()
+  @IsNotEmpty()
+  damagePosition: string;
+
   @IsString()
   @IsNotEmpty()
   damageType: string;
@@ -20,27 +16,28 @@ export class SaveDamageDto {
 
   @IsString()
   @IsNotEmpty()
-  damagePosition: string;
+  description: string;
 
-  @IsOptional()
   @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsString()
-  repairMethod?: string;
+  @IsNotEmpty()
+  repairMethod: string;
 
   @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
   images: string[];
 }
 
 export class SaveInspectionDto {
+  @IsOptional()
   @IsInt()
+  @Transform(({ value }) => (typeof value === 'string' ? parseInt(value, 10) : value))
+  id?: number;
+
+  @IsInt()
+  @Transform(({ value }) => (typeof value === 'string' ? parseInt(value, 10) : value))
   containerId: number;
 
   @IsInt()
+  @Transform(({ value }) => (typeof value === 'string' ? parseInt(value, 10) : value))
   surveyorId: number;
 
   @IsString()
@@ -51,16 +48,14 @@ export class SaveInspectionDto {
   @IsNotEmpty()
   inspectionDate: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   result?: string;
 
-  @IsOptional()
   @IsString()
+  @IsOptional()
   note?: string;
 
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SaveDamageDto)
   damages: SaveDamageDto[];
 }
