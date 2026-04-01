@@ -1,8 +1,8 @@
 import React from 'react';
-import AppNavigator from './src/navigations/AppNavigator';
+import AppNavigation from './src/navigations/AppNavigation';
 
 function App(): JSX.Element {
-  return <AppNavigator />;
+  return <AppNavigation />;
 }
 
 export default App;

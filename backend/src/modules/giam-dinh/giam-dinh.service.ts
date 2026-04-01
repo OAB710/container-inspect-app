@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateInspectionDto } from './dto/create-inspection.dto';
 import { UpdateInspectionDto } from './dto/update-inspection.dto';
+import { SaveInspectionDto } from './dto/save-inspection.dto';
 
 @Injectable()
 export class GiamDinhService {
@@ -114,6 +115,108 @@ export class GiamDinhService {
           },
         },
       },
+    });
+  }
+
+  async saveDraft(id: number | null, dto: SaveInspectionDto) {
+    return this.prisma.$transaction(async (tx) => {
+      let inspection;
+
+      if (id) {
+        // Update existing inspection
+        const existing = await tx.giamDinh.findUnique({
+          where: { id },
+        });
+
+        if (!existing) {
+          throw new NotFoundException('Không tìm thấy giám định');
+        }
+
+        if (existing.status === 'completed') {
+          throw new BadRequestException(
+            'Giám định đã completed, không được phép chỉnh sửa',
+          );
+        }
+
+        inspection = await tx.giamDinh.update({
+          where: { id },
+          data: {
+            containerId: dto.containerId,
+            surveyorId: dto.surveyorId,
+            inspectionCode: dto.inspectionCode,
+            inspectionDate: new Date(dto.inspectionDate),
+            result: dto.result,
+            note: dto.note,
+          },
+        });
+
+        // Delete all existing damages for this inspection
+        await tx.huHongImage.deleteMany({
+          where: {
+            huHong: {
+              giamDinhId: id,
+            },
+          },
+        });
+
+        await tx.huHong.deleteMany({
+          where: {
+            giamDinhId: id,
+          },
+        });
+      } else {
+        // Create new inspection
+        inspection = await tx.giamDinh.create({
+          data: {
+            containerId: dto.containerId,
+            surveyorId: dto.surveyorId,
+            inspectionCode: dto.inspectionCode,
+            inspectionDate: new Date(dto.inspectionDate),
+            status: 'draft',
+            result: dto.result,
+            note: dto.note,
+          },
+        });
+      }
+
+      // Create damages and their images
+      for (const damageDto of dto.damages) {
+        const damage = await tx.huHong.create({
+          data: {
+            giamDinhId: inspection.id,
+            damageType: damageDto.damageType,
+            severity: damageDto.severity,
+            damagePosition: damageDto.damagePosition,
+            description: damageDto.description,
+            repairMethod: damageDto.repairMethod,
+          },
+        });
+
+        // Create images for this damage
+        for (const imageUrl of damageDto.images) {
+          await tx.huHongImage.create({
+            data: {
+              huHongId: damage.id,
+              imageUrl,
+              imageName: imageUrl.split('/').pop() || imageUrl,
+            },
+          });
+        }
+      }
+
+      // Return complete inspection with all related data
+      return tx.giamDinh.findUnique({
+        where: { id: inspection.id },
+        include: {
+          container: true,
+          surveyor: true,
+          damages: {
+            include: {
+              images: true,
+            },
+          },
+        },
+      });
     });
   }
 

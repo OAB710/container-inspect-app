@@ -1,103 +1,67 @@
-import React, {useCallback, useState} from 'react';
-import {FlatList, Pressable, SafeAreaView, Text, View} from 'react-native';
-import {useFocusEffect} from '@react-navigation/native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import AppEmptyState from '../../components/common/AppEmptyState';
-import AppErrorState from '../../components/common/AppErrorState';
-import AppLoader from '../../components/common/AppLoader';
-import InspectionCard from '../../components/inspection/InspectionCard';
-import {RootStackParamList} from '../../navigations/AppNavigator';
-import {getInspections} from '../../services/inspectionService';
-import {Inspection} from '../../types/inspection.types';
-import styles from './InspectionListScreen.styles';
+import React from 'react';
+import { FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import MainLayout from '../../components/MainLayout';
+import MLoading from '../../components/MLoading';
+import MEmpty from '../../components/MEmpty';
+import MButton from '../../components/MButton';
+import MStatusBadge from '../../components/MStatusBadge';
+import { InspectionStackParamList } from '../../types/navigations/inspection-navigation';
+import { useInspectionList } from '../../queries/useInspection';
+import inspectionListStyle from './styles/inspection-list.style';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'InspectionList'>;
+type Props = NativeStackScreenProps<InspectionStackParamList, 'InspectionListScreen'>;
 
-function InspectionListScreen({navigation}: Props): JSX.Element {
-  const [inspections, setInspections] = useState<Inspection[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
-
-  const fetchInspections = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const data = await getInspections();
-      setInspections(data);
-    } catch (err) {
-      console.log('Lỗi tải danh sách giám định:', err);
-      setError('Không thể tải danh sách giám định');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchInspections();
-    }, [fetchInspections]),
-  );
-
-  const renderItem = ({item}: {item: Inspection}) => {
-    return (
-      <InspectionCard
-        item={item}
-        onPress={() =>
-          navigation.navigate('InspectionDetail', {inspectionId: item.id})
-        }
-      />
-    );
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.fullScreen}>
-        <AppLoader message="Đang tải danh sách giám định..." />
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.fullScreen}>
-        <AppErrorState message={error} onRetry={fetchInspections} />
-      </SafeAreaView>
-    );
-  }
+const InspectionListScreen: React.FC<Props> = ({ navigation }) => {
+  const { data, loading, error } = useInspectionList();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Danh sách giám định</Text>
-          <Text style={styles.subtitle}>
-            Theo dõi và quản lý các phiếu giám định container
-          </Text>
-        </View>
-
-        <Pressable
-          style={styles.addButton}
-          onPress={() => navigation.navigate('InspectionDetail')}>
-          <Text style={styles.addButtonText}>+ Tạo mới</Text>
-        </Pressable>
+    <MainLayout>
+      <View style={inspectionListStyle.createButtonWrap}>
+        <MButton
+          title="Tạo mới giám định"
+          onPress={() => navigation.navigate('InspectionDetailScreen')}
+        />
       </View>
 
-      <FlatList
-        data={inspections}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <AppEmptyState
-            title="Chưa có phiếu giám định"
-            message="Bạn hãy tạo mới một phiếu giám định để bắt đầu."
-          />
-        }
-      />
-    </SafeAreaView>
+      {loading && <MLoading />}
+      {!loading && !!error && <MEmpty text={error} />}
+      {!loading && !error && data.length === 0 && <MEmpty text="Chưa có giám định nào" />}
+
+      {!loading && !error && data.length > 0 && (
+        <FlatList
+          data={data}
+          scrollEnabled={false}
+          keyExtractor={item => String(item.id)}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={inspectionListStyle.card}
+              onPress={() =>
+                navigation.navigate('InspectionDetailScreen', { inspectionId: item.id })
+              }
+            >
+              <View style={inspectionListStyle.cardTop}>
+                <Text style={inspectionListStyle.code}>{item.inspection_code}</Text>
+                <MStatusBadge status={item.status} />
+              </View>
+
+              <Text style={inspectionListStyle.text}>
+                Container: {item.container?.container_no || '--'}
+              </Text>
+              <Text style={inspectionListStyle.text}>Kết quả: {item.result || '--'}</Text>
+              <Text style={inspectionListStyle.text}>
+                Ngày giám định:{' '}
+                {item.inspection_date
+                  ? new Date(item.inspection_date).toLocaleString('vi-VN')
+                  : '--'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+    </MainLayout>
   );
-}
+};
 
 export default InspectionListScreen;

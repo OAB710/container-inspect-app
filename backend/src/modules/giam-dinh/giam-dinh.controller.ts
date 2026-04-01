@@ -12,6 +12,7 @@ import {
 import { GiamDinhService } from './giam-dinh.service';
 import { CreateInspectionDto } from './dto/create-inspection.dto';
 import { UpdateInspectionDto } from './dto/update-inspection.dto';
+import { SaveInspectionDto } from './dto/save-inspection.dto';
 
 @Controller('giam-dinh')
 export class GiamDinhController {
@@ -20,6 +21,19 @@ export class GiamDinhController {
   @Post()
   createInspection(@Body() body: CreateInspectionDto) {
     return this.giamDinhService.createInspection(body);
+  }
+
+  @Post('save-draft')
+  saveDraftNew(@Body() body: SaveInspectionDto) {
+    return this.giamDinhService.saveDraft(null, body);
+  }
+
+  @Post(':id/save-draft')
+  saveDraftExisting(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: SaveInspectionDto,
+  ) {
+    return this.giamDinhService.saveDraft(id, body);
   }
 
   @Get()
