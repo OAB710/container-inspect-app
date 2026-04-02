@@ -6,12 +6,15 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { DamagesService } from './damages.service';
 import { CreateDamageDto } from './dto/create-damage.dto';
 import { UpdateDamageDto } from './dto/update-damage.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller()
+@UseGuards(JwtAuthGuard)
 export class DamagesController {
   constructor(private readonly damagesService: DamagesService) {}
 

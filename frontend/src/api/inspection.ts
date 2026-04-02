@@ -20,6 +20,7 @@ export interface SaveInspectionDraftPayload {
   surveyor_id: string;
   inspection_code: string;
   inspection_date: string;
+  expected_updated_at?: string;
   result: string;
   note: string;
   damages: SendDamageItem[];
@@ -49,8 +50,11 @@ const inspectionApi = {
     });
   },
 
-  complete: (id: number): Promise<Inspection> => {
-    return apiInstance.patch(`/giam-dinh/${id}/complete`);
+  complete: (
+    id: number,
+    payload?: {expected_updated_at?: string},
+  ): Promise<Inspection> => {
+    return apiInstance.patch(`/giam-dinh/${id}/complete`, payload || {});
   },
 };
 

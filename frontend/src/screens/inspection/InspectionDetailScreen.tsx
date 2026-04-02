@@ -13,7 +13,9 @@ import {
   useCompleteInspection,
 } from '../../queries/useInspection';
 import {useDamageDraftStore} from '../../stores/damageDraftStore';
+import {useAuthStore} from '../../stores/authStore';
 import imageApi from '../../api/image';
+import {ApiError} from '../../api/apiInstance';
 import {generateInspectionCode} from '../../utils/generateInspectionCode';
 import inspectionDetailStyle from './styles/inspection-detail.style';
 import InspectionInfoForm from './components/InspectionInfoForm';
@@ -27,15 +29,18 @@ type Props = NativeStackScreenProps<
 const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
   const inspectionId = route.params?.inspectionId;
   const {data, loading, refetch} = useInspectionDetail(inspectionId);
+  const currentUser = useAuthStore(state => state.user);
   const {damages, setDamages, resetDamages, removeDamage} =
     useDamageDraftStore();
   const saveDraftMutation = useSaveInspectionDraft();
   const completeMutation = useCompleteInspection();
+  const isAdmin = currentUser?.role === 'admin';
+  const currentUserId = currentUser?.id ? String(currentUser.id) : null;
 
   const {control, handleSubmit, reset} = useForm<InspectionFormValues>({
     defaultValues: {
       container_id: null,
-      surveyor_id: null,
+      surveyor_id: isAdmin ? null : currentUserId,
       inspection_code: '',
       inspection_date: new Date().toISOString(),
       result: '',
@@ -49,11 +54,33 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
 
   const isReadonly = status === 'completed';
 
+  const showStaleDataAlert = () => {
+    Alert.alert(
+      'Dữ liệu đã thay đổi',
+      'Dữ liệu giám định đã được cập nhật từ server. Vui lòng làm mới lại trang trước khi thao tác tiếp.',
+      [
+        {
+          text: 'Làm mới',
+          onPress: () => {
+            refetch();
+          },
+        },
+        {
+          text: 'Đóng',
+          style: 'cancel',
+        },
+      ],
+    );
+  };
+
   useEffect(() => {
     if (data) {
       reset({
         container_id: data.container_id ? String(data.container_id) : null,
-        surveyor_id: data.surveyor_id ? String(data.surveyor_id) : null,
+        surveyor_id:
+          data.surveyor_id && (isAdmin || data.surveyor_id === currentUser?.id)
+            ? String(data.surveyor_id)
+            : currentUserId,
         inspection_code: data.inspection_code || '',
         inspection_date: data.inspection_date || new Date().toISOString(),
         result: data.result || '',
@@ -66,7 +93,7 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
       const generatedCode = generateInspectionCode();
       reset({
         container_id: null,
-        surveyor_id: null,
+        surveyor_id: isAdmin ? null : currentUserId,
         inspection_code: generatedCode,
         inspection_date: new Date().toISOString(),
         result: '',
@@ -74,22 +101,32 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
       });
       resetDamages();
     }
-  }, [data, reset, setDamages, resetDamages]);
+  }, [
+    data,
+    reset,
+    setDamages,
+    resetDamages,
+    currentUserId,
+    currentUser?.id,
+    isAdmin,
+  ]);
 
   const onSubmit = async (values: InspectionFormValues) => {
     try {
-      // Validate that we have at least container_id and surveyor_id
-      if (!values.container_id || !values.surveyor_id) {
-        Alert.alert('Lỗi', 'Vui lòng chọn container và người giám định');
+      if (!values.container_id) {
+        Alert.alert('Lỗi', 'Vui lòng chọn container');
         return;
       }
 
       console.log('🚀 [onSubmit] Starting save process...');
       console.log('🚀 [onSubmit] Damages count:', damages.length);
-      console.log('🚀 [onSubmit] Damages with images:', damages.map(d => ({
-        position: d.damage_position,
-        imageCount: d.images?.length || 0,
-      })));
+      console.log(
+        '🚀 [onSubmit] Damages with images:',
+        damages.map(d => ({
+          position: d.damage_position,
+          imageCount: d.images?.length || 0,
+        })),
+      );
 
       // First, upload all local images to Cloudinary
       const damagesWithUploadedImages = await Promise.all(
@@ -99,24 +136,39 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
             (damage.images || []).map(async (img, imgIndex) => {
               // If it's a local image (has is_local flag and uri), upload it
               if (img.is_local && img.uri) {
-                console.log(`📸 [onSubmit] Uploading image ${imgIndex + 1} for damage ${damageIndex + 1}:`, img.fileName);
+                console.log(
+                  `📸 [onSubmit] Uploading image ${imgIndex + 1} for damage ${
+                    damageIndex + 1
+                  }:`,
+                  img.fileName,
+                );
                 try {
                   const cloudinaryUrl = await imageApi.uploadImageFile(
                     img.uri,
                     img.fileName || `image-${Date.now()}.jpg`,
                     img.type || 'image/jpeg',
                   );
-                  console.log(`✅ [onSubmit] Image ${imgIndex + 1} uploaded:`, cloudinaryUrl);
+                  console.log(
+                    `✅ [onSubmit] Image ${imgIndex + 1} uploaded:`,
+                    cloudinaryUrl,
+                  );
                   return cloudinaryUrl;
                 } catch (uploadError) {
-                  console.error(`❌ [onSubmit] Failed to upload image ${imgIndex + 1}:`, uploadError);
+                  console.error(
+                    `❌ [onSubmit] Failed to upload image ${imgIndex + 1}:`,
+                    uploadError,
+                  );
                   throw new Error(
                     `Không thể upload ảnh: ${img.fileName}. Vui lòng thử lại.`,
                   );
                 }
               }
               // If it's already uploaded, use the existing URL
-              console.log(`⏭️  [onSubmit] Skipping already uploaded image ${imgIndex + 1}`);
+              console.log(
+                `⏭️  [onSubmit] Skipping already uploaded image ${
+                  imgIndex + 1
+                }`,
+              );
               return img.image_url || '';
             }),
           );
@@ -138,17 +190,20 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
         images: (damage.images || []).filter(url => !!url),
       }));
 
-      if (transformedDamages.length === 0) {
-        Alert.alert('Lỗi', 'Vui lòng thêm ít nhất một hư hỏng');
+      const resolvedSurveyorId = isAdmin ? values.surveyor_id : currentUserId;
+
+      if (!resolvedSurveyorId) {
+        Alert.alert('Lỗi', 'Không xác định được người giám định');
         return;
       }
 
       const payload = {
         id: inspectionId,
         container_id: values.container_id,
-        surveyor_id: values.surveyor_id,
+        surveyor_id: resolvedSurveyorId,
         inspection_code: values.inspection_code,
         inspection_date: values.inspection_date,
+        expected_updated_at: data?.updated_at,
         result: values.result,
         note: values.note,
         damages: transformedDamages,
@@ -165,6 +220,15 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
       }
     } catch (error: any) {
       console.error('Save error:', error);
+
+      if (
+        error instanceof ApiError &&
+        (error.status === 409 || error.code === 'INSPECTION_STALE')
+      ) {
+        showStaleDataAlert();
+        return;
+      }
+
       Alert.alert(
         'Lỗi',
         error.message || 'Không thể lưu giám định. Kiểm tra lại dữ liệu.',
@@ -179,17 +243,27 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
     }
 
     try {
-      await completeMutation.submit(inspectionId);
+      await completeMutation.submit(inspectionId, {
+        expected_updated_at: data?.updated_at,
+      });
       Alert.alert('Thành công', 'Đã hoàn tất giám định');
       refetch();
     } catch (error: any) {
+      if (
+        error instanceof ApiError &&
+        (error.status === 409 || error.code === 'INSPECTION_STALE')
+      ) {
+        showStaleDataAlert();
+        return;
+      }
+
       Alert.alert('Lỗi', error.message || 'Không thể hoàn tất giám định');
     }
   };
 
   // Format date helper
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return 'Chưa có';
     return new Date(dateString).toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
@@ -234,6 +308,7 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
         readonly={isReadonly}
         container={data?.container}
         surveyor={data?.surveyor}
+        canChooseSurveyor={isAdmin && !isReadonly}
       />
 
       <DamageListSection

@@ -4,6 +4,7 @@ import MButton from '../../../components/MButton';
 import AppColors from '../../../constants/app-colors';
 import {DamageItem} from '../../../types/inspection';
 import DamageImageGallery from './DamageImageGallery';
+import {formatSeverityLabel} from '../../../utils/inspectionDisplay';
 
 interface DamageCardProps {
   item: DamageItem;
@@ -13,12 +14,6 @@ interface DamageCardProps {
   onDelete?: () => void;
 }
 
-const SEVERITY_LABELS: Record<string, string> = {
-  low: 'Thấp',
-  medium: 'Trung bình',
-  high: 'Cao',
-};
-
 const DamageCard: React.FC<DamageCardProps> = ({
   item,
   index,
@@ -26,10 +21,6 @@ const DamageCard: React.FC<DamageCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const getSeverityLabel = (severity: string) => {
-    return SEVERITY_LABELS[severity] || severity;
-  };
-
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Hư hỏng #{index + 1}</Text>
@@ -46,7 +37,7 @@ const DamageCard: React.FC<DamageCardProps> = ({
 
       <View style={styles.row}>
         <Text style={styles.label}>Mức độ:</Text>
-        <Text style={styles.value}>{getSeverityLabel(item.severity)}</Text>
+        <Text style={styles.value}>{formatSeverityLabel(item.severity)}</Text>
       </View>
 
       <View style={styles.row}>

@@ -1,6 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import containerApi, { ContainerItem } from '../api/container';
-import { SelectOption } from '../types/common';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import containerApi, {ContainerItem} from '../api/container';
+import {SelectOption} from '../types/common';
+import {formatContainerStatusLabel} from '../utils/inspectionDisplay';
+
+const resolveContainerDisabledReason = (status: string) => {
+  const normalized = status.trim().toLowerCase();
+  if (normalized !== 'inspected') {
+    return null;
+  }
+
+  return 'Container đã giám định hoàn tất, không thể chọn để tạo giám định mới.';
+};
 
 export const useContainerOptions = (search?: string) => {
   const [data, setData] = useState<ContainerItem[]>([]);
@@ -26,8 +36,13 @@ export const useContainerOptions = (search?: string) => {
 
   const options: SelectOption[] = useMemo(() => {
     return data.map(item => ({
+      disabled: item.status === 'inspected',
+      disabledReason: resolveContainerDisabledReason(item.status) || undefined,
       value: String(item.id),
-      label: `${item.container_no} - ${item.container_type} (${item.container_size}ft) - ${item.status}`,
+      label: item.container_no,
+      subtitle: `${item.container_type} (${item.container_size}ft)`,
+      meta: formatContainerStatusLabel(item.status),
+      status: item.status,
     }));
   }, [data]);
 

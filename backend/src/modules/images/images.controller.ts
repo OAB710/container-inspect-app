@@ -7,12 +7,15 @@ import {
   ParseIntPipe,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('images')
+@UseGuards(JwtAuthGuard)
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
 

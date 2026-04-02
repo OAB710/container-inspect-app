@@ -1,5 +1,11 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class SaveDamageDto {
   @IsString()
@@ -29,15 +35,21 @@ export class SaveDamageDto {
 export class SaveInspectionDto {
   @IsOptional()
   @IsInt()
-  @Transform(({ value }) => (typeof value === 'string' ? parseInt(value, 10) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseInt(value, 10) : value,
+  )
   id?: number;
 
   @IsInt()
-  @Transform(({ value }) => (typeof value === 'string' ? parseInt(value, 10) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseInt(value, 10) : value,
+  )
   containerId: number;
 
   @IsInt()
-  @Transform(({ value }) => (typeof value === 'string' ? parseInt(value, 10) : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? parseInt(value, 10) : value,
+  )
   surveyorId: number;
 
   @IsString()
@@ -47,6 +59,10 @@ export class SaveInspectionDto {
   @IsString()
   @IsNotEmpty()
   inspectionDate: string;
+
+  @IsOptional()
+  @IsString()
+  expectedUpdatedAt?: string;
 
   @IsString()
   @IsOptional()

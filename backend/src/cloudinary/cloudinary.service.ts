@@ -32,10 +32,15 @@ export class CloudinaryService {
             return reject(error);
           }
           if (result?.secure_url) {
-            console.log('✅ [Cloudinary] File upload successful:', result.secure_url);
+            console.log(
+              '✅ [Cloudinary] File upload successful:',
+              result.secure_url,
+            );
             resolve(result);
           } else {
-            console.error('❌ [Cloudinary] No secure_url in file upload result');
+            console.error(
+              '❌ [Cloudinary] No secure_url in file upload result',
+            );
             reject(new Error('No secure_url in Cloudinary response'));
           }
         },

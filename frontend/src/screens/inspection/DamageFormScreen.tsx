@@ -10,7 +10,7 @@ import MInput from '../../components/MInput';
 import MTextArea from '../../components/MTextArea';
 import MDropdown from '../../components/MDropdown';
 import MUpload from '../../components/MUpload';
-import {DAMAGE_TYPE_OPTIONS, SEVERITY_OPTIONS} from '../../constants/app';
+import {SEVERITY_OPTIONS} from '../../constants/app';
 import {DamageFormValues, DamageImage} from '../../types/inspection';
 import {InspectionStackParamList} from '../../types/navigations/inspection-navigation';
 import {useDamageDraftStore} from '../../stores/damageDraftStore';
@@ -134,16 +134,15 @@ const DamageFormScreen: React.FC<Props> = ({navigation, route}) => {
           }}
         />
 
-        <MDropdown
+        <MInput
           control={control}
           name="damage_type"
           label="Loại hư hỏng"
-          placeholder="Chọn loại hư hỏng"
+          placeholder="Nhập loại hư hỏng"
           required
           disabled={readonly}
-          options={DAMAGE_TYPE_OPTIONS}
           rules={{
-            required: 'Vui lòng chọn loại hư hỏng',
+            required: 'Vui lòng nhập loại hư hỏng',
           }}
         />
 

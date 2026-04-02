@@ -31,6 +31,15 @@
 $ yarn install
 ```
 
+## Environment variables
+
+```bash
+# from backend/
+$ copy .env.example .env
+```
+
+`JWT_SECRET` is required for production. In local development, the app can still run without it by using a fallback secret.
+
 ## Compile and run the project
 
 ```bash

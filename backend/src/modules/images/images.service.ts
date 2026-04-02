@@ -64,7 +64,7 @@ export class ImagesService {
 
     if (damage.giamDinh.status === 'completed') {
       throw new BadRequestException(
-        'Giám định đã completed, không được phép thêm ảnh',
+        'Giám định đã hoàn tất, không được phép thêm ảnh',
       );
     }
 
@@ -101,7 +101,7 @@ export class ImagesService {
 
     if (image.huHong.giamDinh.status === 'completed') {
       throw new BadRequestException(
-        'Giám định đã completed, không được phép xóa ảnh',
+        'Giám định đã hoàn tất, không được phép xóa ảnh',
       );
     }
 

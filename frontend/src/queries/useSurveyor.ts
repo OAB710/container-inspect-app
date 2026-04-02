@@ -1,13 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import surveyorApi, { SurveyorItem } from '../api/surveyor';
-import { SelectOption } from '../types/common';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import surveyorApi, {SurveyorItem} from '../api/surveyor';
+import {SelectOption} from '../types/common';
 
-export const useSurveyorOptions = (search?: string) => {
+export const useSurveyorOptions = (search?: string, enabled = true) => {
   const [data, setData] = useState<SurveyorItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const fetchData = useCallback(async () => {
+    if (!enabled) {
+      setData([]);
+      setError('');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -18,7 +25,7 @@ export const useSurveyorOptions = (search?: string) => {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, enabled]);
 
   useEffect(() => {
     fetchData();
@@ -27,7 +34,10 @@ export const useSurveyorOptions = (search?: string) => {
   const options: SelectOption[] = useMemo(() => {
     return data.map(item => ({
       value: String(item.id),
-      label: item.email ? `${item.full_name} - ${item.email}` : item.full_name,
+      label: item.full_name,
+      subtitle: item.email || undefined,
+      meta: item.role === 'admin' ? 'Giám đốc' : 'Người giám định',
+      status: item.role || 'surveyor',
     }));
   }, [data]);
 

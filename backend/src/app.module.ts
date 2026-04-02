@@ -8,6 +8,7 @@ import { DamagesModule } from './modules/damages/damages.module';
 import { ImagesModule } from './modules/images/images.module';
 import { ContainerModule } from './modules/container/container.module';
 import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UserModule } from './modules/user/user.module';
     ImagesModule,
     ContainerModule,
     UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -85,10 +85,10 @@ export const useSaveInspectionDraft = () => {
 export const useCompleteInspection = () => {
   const [loading, setLoading] = useState(false);
 
-  const submit = async (id: number) => {
+  const submit = async (id: number, payload?: {expected_updated_at?: string}) => {
     try {
       setLoading(true);
-      return await inspectionApi.complete(id);
+      return await inspectionApi.complete(id, payload);
     } finally {
       setLoading(false);
     }

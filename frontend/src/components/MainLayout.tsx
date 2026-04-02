@@ -1,19 +1,22 @@
-import React, { PropsWithChildren } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import React, {PropsWithChildren} from 'react';
+import {SafeAreaView, ScrollView, StyleSheet, View} from 'react-native';
 import AppColors from '../constants/app-colors';
 
 interface MainLayoutProps extends PropsWithChildren {
   scrollable?: boolean;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, scrollable = true }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  scrollable = true,
+}) => {
   if (scrollable) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator
+          persistentScrollbar>
           {children}
         </ScrollView>
       </SafeAreaView>

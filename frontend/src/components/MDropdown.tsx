@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, {useMemo, useState} from 'react';
 import {
   Control,
   Controller,
@@ -7,6 +7,7 @@ import {
   RegisterOptions,
 } from 'react-hook-form';
 import {
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -17,11 +18,9 @@ import {
 } from 'react-native';
 import AppColors from '../constants/app-colors';
 import MLabel from './MLabel';
+import {SelectOption} from '../types/common';
 
-export interface DropdownOption {
-  label: string;
-  value: string;
-}
+export type DropdownOption = SelectOption;
 
 type MDropdownProps<T extends FieldValues> = {
   control: Control<T>;
@@ -35,6 +34,7 @@ type MDropdownProps<T extends FieldValues> = {
   >;
   required?: boolean;
   disabled?: boolean;
+  disabledOptionAlertTitle?: string;
 };
 
 const MDropdown = <T extends FieldValues>({
@@ -46,14 +46,48 @@ const MDropdown = <T extends FieldValues>({
   rules,
   required = false,
   disabled = false,
+  disabledOptionAlertTitle = 'Không thể chọn',
 }: MDropdownProps<T>) => {
   const [visible, setVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const normalizeStatus = (value?: string) => {
+    if (!value) return '';
+    return value.trim().toLowerCase();
+  };
+
+  const getStatusBadgeStyle = (status?: string) => {
+    const normalized = normalizeStatus(status);
+    if (['empty', 'available', 'active', 'surveyor'].includes(normalized)) {
+      return styles.statusSuccess;
+    }
+
+    if (['repairing', 'maintenance', 'busy', 'draft'].includes(normalized)) {
+      return styles.statusWarning;
+    }
+
+    if (['damaged', 'blocked', 'inactive'].includes(normalized)) {
+      return styles.statusDanger;
+    }
+
+    return styles.statusDefault;
+  };
+
   const filteredOptions = useMemo(() => {
     if (!searchQuery.trim()) return options;
     const query = searchQuery.toLowerCase();
-    return options.filter(option => option.label.toLowerCase().includes(query));
+    return options.filter(option => {
+      const haystack = [
+        option.label,
+        option.subtitle || '',
+        option.meta || '',
+        option.status || '',
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
   }, [options, searchQuery]);
 
   return (
@@ -61,7 +95,7 @@ const MDropdown = <T extends FieldValues>({
       control={control}
       name={name}
       rules={rules}
-      render={({ field: { onChange, value }, fieldState: { error } }) => {
+      render={({field: {onChange, value}, fieldState: {error}}) => {
         const selectedLabel = useMemo(() => {
           const found = options.find(item => item.value === value);
           return found?.label || '';
@@ -82,31 +116,36 @@ const MDropdown = <T extends FieldValues>({
                 styles.input,
                 disabled && styles.disabledInput,
                 !!error && styles.errorInput,
-              ]}
-            >
+              ]}>
               <Text
                 style={[
                   styles.inputText,
                   !selectedLabel && styles.placeholderText,
                   disabled && styles.disabledText,
-                ]}
-              >
+                ]}>
                 {selectedLabel || placeholder}
               </Text>
               <Text style={styles.arrow}>▾</Text>
             </Pressable>
 
-            {!!error?.message && <Text style={styles.errorText}>{error.message}</Text>}
+            {!!error?.message && (
+              <Text style={styles.errorText}>{error.message}</Text>
+            )}
 
             <Modal
               visible={visible}
               transparent
               animationType="fade"
-              onRequestClose={() => setVisible(false)}
-            >
-              <Pressable style={styles.overlay} onPress={() => setVisible(false)}>
-                <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
-                  <Text style={styles.modalTitle}>{label || 'Chọn dữ liệu'}</Text>
+              onRequestClose={() => setVisible(false)}>
+              <Pressable
+                style={styles.overlay}
+                onPress={() => setVisible(false)}>
+                <Pressable
+                  style={styles.modalCard}
+                  onPress={e => e.stopPropagation()}>
+                  <Text style={styles.modalTitle}>
+                    {label || 'Chọn dữ liệu'}
+                  </Text>
 
                   <TextInput
                     style={styles.searchInput}
@@ -118,34 +157,84 @@ const MDropdown = <T extends FieldValues>({
                     autoComplete="off"
                   />
 
-                  <ScrollView showsVerticalScrollIndicator={false} style={styles.optionsList}>
+                  <ScrollView
+                    showsVerticalScrollIndicator
+                    persistentScrollbar
+                    scrollIndicatorInsets={{right: 2}}
+                    contentContainerStyle={styles.optionsListContent}
+                    style={styles.optionsList}>
                     {filteredOptions.length > 0 ? (
                       filteredOptions.map(option => {
                         const active = option.value === value;
+                        const optionDisabled = Boolean(option.disabled);
 
                         return (
                           <Pressable
                             key={option.value}
-                            style={[styles.optionItem, active && styles.optionItemActive]}
+                            style={[
+                              styles.optionItem,
+                              optionDisabled && styles.optionItemDisabled,
+                              active && styles.optionItemActive,
+                            ]}
                             onPress={() => {
+                              if (optionDisabled) {
+                                Alert.alert(
+                                  disabledOptionAlertTitle,
+                                  option.disabledReason ||
+                                    'Giá trị này hiện không thể chọn.',
+                                );
+                                return;
+                              }
+
                               onChange(option.value);
                               setVisible(false);
                               setSearchQuery('');
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.optionText,
-                                active && styles.optionTextActive,
-                              ]}
-                            >
-                              {option.label}
-                            </Text>
+                            }}>
+                            <View style={styles.optionTopRow}>
+                              <Text
+                                style={[
+                                  styles.optionText,
+                                  active && styles.optionTextActive,
+                                  optionDisabled && styles.optionTextDisabled,
+                                ]}
+                                numberOfLines={1}>
+                                {option.label}
+                              </Text>
+
+                              {!!option.meta && (
+                                <View
+                                  style={[
+                                    styles.statusBadge,
+                                    getStatusBadgeStyle(
+                                      option.status || option.meta,
+                                    ),
+                                    active && styles.statusBadgeActive,
+                                  ]}>
+                                  <Text style={styles.statusText}>
+                                    {option.meta}
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+
+                            {!!option.subtitle && (
+                              <Text
+                                style={[
+                                  styles.optionSubtitle,
+                                  active && styles.optionSubtitleActive,
+                                  optionDisabled && styles.optionSubtitleDisabled,
+                                ]}
+                                numberOfLines={1}>
+                                {option.subtitle}
+                              </Text>
+                            )}
                           </Pressable>
                         );
                       })
                     ) : (
-                      <Text style={styles.emptyText}>Không tìm thấy kết quả</Text>
+                      <Text style={styles.emptyText}>
+                        Không tìm thấy kết quả
+                      </Text>
                     )}
                   </ScrollView>
                 </Pressable>
@@ -231,22 +320,82 @@ const styles = StyleSheet.create({
   optionsList: {
     maxHeight: 300,
   },
+  optionsListContent: {
+    paddingRight: 10,
+  },
   optionItem: {
     paddingVertical: 14,
     paddingHorizontal: 12,
     borderRadius: 12,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: AppColors.border,
+    backgroundColor: AppColors.white,
+  },
+  optionItemDisabled: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    opacity: 0.85,
   },
   optionItemActive: {
     backgroundColor: AppColors.primaryLight,
+    borderColor: AppColors.primary,
+  },
+  optionTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   optionText: {
     fontSize: 15,
     color: AppColors.text,
+    flex: 1,
   },
   optionTextActive: {
     color: AppColors.primary,
     fontWeight: '700',
+  },
+  optionTextDisabled: {
+    color: '#64748B',
+  },
+  optionSubtitle: {
+    fontSize: 13,
+    color: AppColors.textSecondary,
+    marginTop: 4,
+  },
+  optionSubtitleActive: {
+    color: AppColors.primary,
+    opacity: 0.9,
+  },
+  optionSubtitleDisabled: {
+    color: '#94A3B8',
+  },
+  statusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  statusBadgeActive: {
+    opacity: 0.9,
+  },
+  statusDefault: {
+    backgroundColor: '#EEF2FF',
+  },
+  statusSuccess: {
+    backgroundColor: '#DCFCE7',
+  },
+  statusWarning: {
+    backgroundColor: '#FEF3C7',
+  },
+  statusDanger: {
+    backgroundColor: '#FEE2E2',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: AppColors.text,
+    textTransform: 'capitalize',
   },
   emptyText: {
     fontSize: 14,

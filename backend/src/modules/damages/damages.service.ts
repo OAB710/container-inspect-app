@@ -22,7 +22,7 @@ export class DamagesService {
 
     if (inspection.status === 'completed') {
       throw new BadRequestException(
-        'Giám định đã completed, không được phép chỉnh sửa',
+        'Giám định đã hoàn tất, không được phép chỉnh sửa',
       );
     }
 
@@ -61,7 +61,7 @@ export class DamagesService {
 
     if (damage.giamDinh.status === 'completed') {
       throw new BadRequestException(
-        'Giám định đã completed, không được phép chỉnh sửa',
+        'Giám định đã hoàn tất, không được phép chỉnh sửa',
       );
     }
 
@@ -94,7 +94,7 @@ export class DamagesService {
 
     if (damage.giamDinh.status === 'completed') {
       throw new BadRequestException(
-        'Giám định đã completed, không được phép xóa',
+        'Giám định đã hoàn tất, không được phép xóa',
       );
     }
 

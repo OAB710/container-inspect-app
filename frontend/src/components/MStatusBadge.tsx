@@ -1,29 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import AppColors from '../constants/app-colors';
-import { InspectionStatus } from '../types/inspection';
+import {InspectionStatus} from '../types/inspection';
+import {formatInspectionStatusLabel} from '../utils/inspectionDisplay';
 
 interface MStatusBadgeProps {
   status: InspectionStatus;
 }
 
-const MStatusBadge: React.FC<MStatusBadgeProps> = ({ status }) => {
-  const isCompleted = status === 'completed';
-
+const MStatusBadge: React.FC<MStatusBadgeProps> = ({status}) => {
   return (
     <View
       style={[
         styles.badge,
-        isCompleted ? styles.completedBadge : styles.draftBadge,
-      ]}
-    >
+        status === 'completed' ? styles.completedBadge : styles.draftBadge,
+      ]}>
       <Text
         style={[
           styles.text,
-          isCompleted ? styles.completedText : styles.draftText,
-        ]}
-      >
-        {isCompleted ? 'Đã hoàn tất' : 'Nháp'}
+          status === 'completed' ? styles.completedText : styles.draftText,
+        ]}>
+        {formatInspectionStatusLabel(status)}
       </Text>
     </View>
   );
