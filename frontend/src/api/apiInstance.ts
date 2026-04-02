@@ -4,6 +4,13 @@ import {useAuthStore} from '../stores/authStore';
 
 const TOKEN_KEY = 'auth_token';
 
+const LOCAL_API_BASE_URL = 'http://10.0.2.2:3000';
+const PROD_API_BASE_URL = 'https://container-inspect-app-2.onrender.com';
+
+const resolveBaseUrl = () => {
+  return __DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL;
+};
+
 export class ApiError extends Error {
   status?: number;
   code?: string;
@@ -19,8 +26,7 @@ export class ApiError extends Error {
 }
 
 const apiInstance = axios.create({
-  // baseURL: 'https://container-inspect-app-2.onrender.com', // Android emulator
-  baseURL: 'http://10.0.2.2:3000',
+  baseURL: resolveBaseUrl(),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
