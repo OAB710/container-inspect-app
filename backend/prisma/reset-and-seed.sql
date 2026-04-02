@@ -45,8 +45,17 @@ RESTART IDENTITY CASCADE;
     INSERT INTO "dt_giam_dinh"
         ("container_id", "surveyor_id", "inspection_code", "inspection_date", "status", "result", "note", "created_at", "updated_at")
     VALUES
-        (2, 1, 'GD-SEEDED-0002', NOW() - INTERVAL '2 day', 'completed', 'Đạt', 'Container đã giám định hoàn tất', NOW() - INTERVAL '2 day', NOW() - INTERVAL '2 day'),
-        (11, 2, 'GD-SEEDED-0011', NOW() - INTERVAL '1 day', 'completed', 'Đạt', 'Container đã giám định hoàn tất', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
-        (6, 3, 'GD-SEEDED-0006', NOW(), 'draft', 'Đang cập nhật', 'Bản nháp kiểm tra hiện trạng', NOW(), NOW());
+        (2, 1, 'GD-SEEDED-0002', NOW() - INTERVAL
+    '2 day', 'completed', 'Đạt', 'Container đã giám định hoàn tất', NOW
+    () - INTERVAL '2 day', NOW
+    () - INTERVAL '2 day'),
+    (11, 2, 'GD-SEEDED-0011', NOW
+    () - INTERVAL '1 day', 'completed', 'Đạt', 'Container đã giám định hoàn tất', NOW
+    () - INTERVAL '1 day', NOW
+    () - INTERVAL '1 day'),
+    (6, 3, 'GD-SEEDED-0006', NOW
+    (), 'draft', 'Đang cập nhật', 'Bản nháp kiểm tra hiện trạng', NOW
+    (), NOW
+    ());
 
     COMMIT;

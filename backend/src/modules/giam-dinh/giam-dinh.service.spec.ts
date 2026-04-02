@@ -89,7 +89,9 @@ describe('GiamDinhService', () => {
       const tx = {
         giamDinh: {
           update: jest.fn().mockResolvedValue({ id: 20 }),
-          findUnique: jest.fn().mockResolvedValue({ id: 20, status: 'completed' }),
+          findUnique: jest
+            .fn()
+            .mockResolvedValue({ id: 20, status: 'completed' }),
         },
         container: {
           update: jest.fn().mockResolvedValue({ id: 3, status: 'inspected' }),

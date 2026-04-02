@@ -222,7 +222,8 @@ const MDropdown = <T extends FieldValues>({
                                 style={[
                                   styles.optionSubtitle,
                                   active && styles.optionSubtitleActive,
-                                  optionDisabled && styles.optionSubtitleDisabled,
+                                  optionDisabled &&
+                                    styles.optionSubtitleDisabled,
                                 ]}
                                 numberOfLines={1}>
                                 {option.subtitle}

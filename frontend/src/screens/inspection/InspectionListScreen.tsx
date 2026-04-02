@@ -150,7 +150,9 @@ const InspectionListScreen: React.FC<Props> = ({navigation}) => {
             onRefresh={refetch}
             ListEmptyComponent={renderListEmpty}
             contentContainerStyle={
-              data.length === 0 ? {flexGrow: 1, justifyContent: 'center'} : undefined
+              data.length === 0
+                ? {flexGrow: 1, justifyContent: 'center'}
+                : undefined
             }
             ItemSeparatorComponent={() => <View style={{height: 12}} />}
             renderItem={({item}) => (

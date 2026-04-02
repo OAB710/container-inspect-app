@@ -5,10 +5,16 @@ import {useAuthStore} from '../stores/authStore';
 const TOKEN_KEY = 'auth_token';
 
 const LOCAL_API_BASE_URL = 'http://10.0.2.2:3000';
-const PROD_API_BASE_URL = 'https://container-inspect-app-2.onrender.com';
+const PROD_API_BASE_URL =
+  'https://container-inspect-app-production.up.railway.app';
+const USE_LOCAL_API_IN_DEV = false;
 
 const resolveBaseUrl = () => {
-  return __DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL;
+  if (__DEV__) {
+    return USE_LOCAL_API_IN_DEV ? LOCAL_API_BASE_URL : PROD_API_BASE_URL;
+  }
+
+  return PROD_API_BASE_URL;
 };
 
 export class ApiError extends Error {
@@ -16,7 +22,12 @@ export class ApiError extends Error {
   code?: string;
   payload?: unknown;
 
-  constructor(message: string, status?: number, code?: string, payload?: unknown) {
+  constructor(
+    message: string,
+    status?: number,
+    code?: string,
+    payload?: unknown,
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -61,7 +72,8 @@ apiInstance.interceptors.response.use(
     const normalizedMessage = Array.isArray(responseData?.message)
       ? responseData.message.join(', ')
       : responseData?.message;
-    const message = normalizedMessage || error?.message || 'Có lỗi xảy ra khi gọi API';
+    const message =
+      normalizedMessage || error?.message || 'Có lỗi xảy ra khi gọi API';
     const status = error?.response?.status;
     const code = responseData?.code;
 
