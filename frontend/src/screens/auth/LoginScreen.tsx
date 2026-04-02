@@ -119,6 +119,8 @@ const LoginScreen: React.FC = () => {
                 onChangeText={text =>
                   setForm(prev => ({...prev, fullName: text}))
                 }
+                autoCorrect={false}
+                spellCheck={false}
                 placeholder="Nhập họ tên"
                 placeholderTextColor={AppColors.textSecondary}
               />
@@ -131,6 +133,7 @@ const LoginScreen: React.FC = () => {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoCorrect={false}
+                spellCheck={false}
                 placeholder="Nhập email"
                 placeholderTextColor={AppColors.textSecondary}
               />
@@ -144,6 +147,7 @@ const LoginScreen: React.FC = () => {
             onChangeText={text => setForm(prev => ({...prev, username: text}))}
             autoCapitalize="none"
             autoCorrect={false}
+            spellCheck={false}
             placeholder="Nhập tài khoản"
             placeholderTextColor={AppColors.textSecondary}
           />
@@ -156,6 +160,7 @@ const LoginScreen: React.FC = () => {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
+            spellCheck={false}
             placeholder="Nhập mật khẩu"
             placeholderTextColor={AppColors.textSecondary}
           />
@@ -172,6 +177,7 @@ const LoginScreen: React.FC = () => {
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
+                spellCheck={false}
                 placeholder="Nhập lại mật khẩu"
                 placeholderTextColor={AppColors.textSecondary}
               />

@@ -73,7 +73,7 @@ describe('GiamDinhService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
-  it('should set container status to inspected when completing inspection', async () => {
+  it('should allow completing inspection without note or damages and set container inspected', async () => {
     prismaMock.giamDinh.findUnique.mockResolvedValue({
       id: 20,
       containerId: 3,
@@ -81,8 +81,8 @@ describe('GiamDinhService', () => {
       surveyorId: 1,
       updatedAt: new Date('2026-04-02T10:00:00.000Z'),
       result: 'Đạt',
-      note: 'Hoàn tất',
-      damages: [{ id: 1 }],
+      note: '',
+      damages: [],
     });
 
     prismaMock.$transaction.mockImplementation(async (cb: any) => {

@@ -384,19 +384,6 @@ export class GiamDinhService {
       throw new BadRequestException('Giám định này đã hoàn tất rồi');
     }
 
-    // Validate required fields
-    if (!existing.result || !existing.note) {
-      throw new BadRequestException(
-        'Vui lòng điền đầy đủ kết quả giám định và ghi chú trước khi hoàn tất',
-      );
-    }
-
-    if (!existing.damages || existing.damages.length === 0) {
-      throw new BadRequestException(
-        'Vui lòng thêm ít nhất một hư hỏng trước khi hoàn tất',
-      );
-    }
-
     return this.prisma.$transaction(async (tx) => {
       const completedInspection = await tx.giamDinh.update({
         where: { id },

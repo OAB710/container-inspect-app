@@ -153,8 +153,8 @@ const MDropdown = <T extends FieldValues>({
                     placeholderTextColor={AppColors.textSecondary}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    textContentType="none"
-                    autoComplete="off"
+                    autoCorrect={false}
+                    spellCheck={false}
                   />
 
                   <ScrollView

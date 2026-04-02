@@ -1,5 +1,5 @@
-import React, {useEffect, useMemo} from 'react';
-import {Alert, Text, View} from 'react-native';
+import React, {useEffect, useMemo, useRef} from 'react';
+import {Alert, ScrollView, Text, View} from 'react-native';
 import {useForm} from 'react-hook-form';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import MainLayout from '../../components/MainLayout';
@@ -29,6 +29,7 @@ type Props = NativeStackScreenProps<
 const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
   const inspectionId = route.params?.inspectionId;
   const {data, loading, refetch} = useInspectionDetail(inspectionId);
+  const scrollViewRef = useRef<ScrollView>(null);
   const currentUser = useAuthStore(state => state.user);
   const {damages, setDamages, resetDamages, removeDamage} =
     useDamageDraftStore();
@@ -71,6 +72,10 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
         },
       ],
     );
+  };
+
+  const scrollToTop = () => {
+    scrollViewRef.current?.scrollTo({y: 0, animated: true});
   };
 
   useEffect(() => {
@@ -217,6 +222,7 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
         navigation.replace('InspectionDetailScreen', {inspectionId: res.id});
       } else {
         refetch();
+        scrollToTop();
       }
     } catch (error: any) {
       console.error('Save error:', error);
@@ -248,6 +254,7 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
       });
       Alert.alert('Thành công', 'Đã hoàn tất giám định');
       refetch();
+      scrollToTop();
     } catch (error: any) {
       if (
         error instanceof ApiError &&
@@ -274,7 +281,7 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
   };
 
   return (
-    <MainLayout>
+    <MainLayout scrollViewRef={scrollViewRef}>
       <View style={inspectionDetailStyle.headerWrap}>
         <Text style={inspectionDetailStyle.headerTitle}>
           {inspectionId ? 'Chi tiết giám định' : 'Tạo mới giám định'}

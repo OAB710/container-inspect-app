@@ -6,7 +6,7 @@ import {
   Path,
   RegisterOptions,
 } from 'react-hook-form';
-import { StyleSheet, Text, TextInput, View, TextInputProps } from 'react-native';
+import {StyleSheet, Text, TextInput, View, TextInputProps} from 'react-native';
 import AppColors from '../constants/app-colors';
 import MLabel from './MLabel';
 
@@ -29,6 +29,8 @@ const MInput = <T extends FieldValues>({
   rules,
   required = false,
   disabled = false,
+  autoCorrect = false,
+  spellCheck = false,
   ...props
 }: MInputProps<T>) => {
   return (
@@ -36,7 +38,7 @@ const MInput = <T extends FieldValues>({
       control={control}
       name={name}
       rules={rules}
-      render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+      render={({field: {onChange, onBlur, value}, fieldState: {error}}) => (
         <View style={styles.wrapper}>
           {!!label && <MLabel text={label} required={required} />}
 
@@ -45,9 +47,9 @@ const MInput = <T extends FieldValues>({
             onChangeText={onChange}
             onBlur={onBlur}
             editable={!disabled}
+            autoCorrect={autoCorrect}
+            spellCheck={spellCheck}
             placeholderTextColor={AppColors.textSecondary}
-            textContentType="none"
-            autoComplete="off"
             style={[
               styles.input,
               disabled && styles.disabledInput,
@@ -56,7 +58,9 @@ const MInput = <T extends FieldValues>({
             {...props}
           />
 
-          {!!error?.message && <Text style={styles.errorText}>{error.message}</Text>}
+          {!!error?.message && (
+            <Text style={styles.errorText}>{error.message}</Text>
+          )}
         </View>
       )}
     />

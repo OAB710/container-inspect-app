@@ -4,16 +4,19 @@ import AppColors from '../constants/app-colors';
 
 interface MainLayoutProps extends PropsWithChildren {
   scrollable?: boolean;
+  scrollViewRef?: React.RefObject<ScrollView>;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
   children,
   scrollable = true,
+  scrollViewRef,
 }) => {
   if (scrollable) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator
           persistentScrollbar>
