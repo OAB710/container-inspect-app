@@ -78,6 +78,139 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
     scrollViewRef.current?.scrollTo({y: 0, animated: true});
   };
 
+  const buildSavePayload = (
+    values: InspectionFormValues,
+    expectedUpdatedAt?: string,
+  ) => {
+    const containerId = values.container_id;
+    const resolvedSurveyorId = isAdmin ? values.surveyor_id : currentUserId;
+
+    if (!containerId) {
+      throw new Error('Vui lòng chọn container');
+    }
+
+    if (!resolvedSurveyorId) {
+      throw new Error('Không xác định được người giám định');
+    }
+
+    return {
+      id: inspectionId,
+      container_id: containerId,
+      surveyor_id: resolvedSurveyorId,
+      inspection_code: values.inspection_code,
+      inspection_date: values.inspection_date,
+      expected_updated_at: expectedUpdatedAt,
+      result: values.result,
+      note: values.note,
+      damages: damages.map(damage => ({
+        damagePosition: damage.damage_position,
+        damageType: damage.damage_type,
+        severity: damage.severity,
+        description: damage.description,
+        repairMethod: damage.repair_method,
+        images: (damage.images || [])
+          .map(img => img.image_url || '')
+          .filter(url => !!url),
+      })),
+    };
+  };
+
+  const persistCurrentInspection = async (
+    values: InspectionFormValues,
+    options?: {showSuccessAlert?: boolean},
+  ) => {
+    if (!values.container_id) {
+      Alert.alert('Lỗi', 'Vui lòng chọn container');
+      return null;
+    }
+
+    console.log('🚀 [persistCurrentInspection] Starting save process...');
+    console.log('🚀 [persistCurrentInspection] Damages count:', damages.length);
+    console.log(
+      '🚀 [persistCurrentInspection] Damages with images:',
+      damages.map(d => ({
+        position: d.damage_position,
+        imageCount: d.images?.length || 0,
+      })),
+    );
+
+    const damagesWithUploadedImages = await Promise.all(
+      damages.map(async (damage, damageIndex) => {
+        console.log(
+          `📦 [persistCurrentInspection] Processing damage ${damageIndex + 1}...`,
+        );
+
+        const uploadedImages = await Promise.all(
+          (damage.images || []).map(async (img, imgIndex) => {
+            if (img.is_local && img.uri) {
+              console.log(
+                `📸 [persistCurrentInspection] Uploading image ${imgIndex + 1} for damage ${
+                  damageIndex + 1
+                }:`,
+                img.fileName,
+              );
+
+              try {
+                const cloudinaryUrl = await imageApi.uploadImageFile(
+                  img.uri,
+                  img.fileName || `image-${Date.now()}.jpg`,
+                  img.type || 'image/jpeg',
+                );
+
+                console.log(
+                  `✅ [persistCurrentInspection] Image ${imgIndex + 1} uploaded:`,
+                  cloudinaryUrl,
+                );
+
+                return cloudinaryUrl;
+              } catch (uploadError) {
+                console.error(
+                  `❌ [persistCurrentInspection] Failed to upload image ${imgIndex + 1}:`,
+                  uploadError,
+                );
+                throw new Error(
+                  `Không thể upload ảnh: ${img.fileName}. Vui lòng thử lại.`,
+                );
+              }
+            }
+
+            console.log(
+              `⏭️  [persistCurrentInspection] Skipping already uploaded image ${
+                imgIndex + 1
+              }`,
+            );
+            return img.image_url || '';
+          }),
+        );
+
+        return {
+          ...damage,
+          images: uploadedImages,
+        };
+      }),
+    );
+
+    const transformedDamages = damagesWithUploadedImages.map(damage => ({
+      damagePosition: damage.damage_position,
+      damageType: damage.damage_type,
+      severity: damage.severity,
+      description: damage.description,
+      repairMethod: damage.repair_method,
+      images: (damage.images || []).filter(url => !!url),
+    }));
+
+    const payload = buildSavePayload(values, data?.updated_at);
+    payload.damages = transformedDamages;
+
+    const savedInspection = await saveDraftMutation.submit(payload);
+
+    if (options?.showSuccessAlert) {
+      Alert.alert('Thành công', 'Lưu giám định thành công');
+    }
+
+    return savedInspection;
+  };
+
   useEffect(() => {
     if (data) {
       reset({
@@ -118,105 +251,13 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
 
   const onSubmit = async (values: InspectionFormValues) => {
     try {
-      if (!values.container_id) {
-        Alert.alert('Lỗi', 'Vui lòng chọn container');
+      const res = await persistCurrentInspection(values, {
+        showSuccessAlert: true,
+      });
+
+      if (!res) {
         return;
       }
-
-      console.log('🚀 [onSubmit] Starting save process...');
-      console.log('🚀 [onSubmit] Damages count:', damages.length);
-      console.log(
-        '🚀 [onSubmit] Damages with images:',
-        damages.map(d => ({
-          position: d.damage_position,
-          imageCount: d.images?.length || 0,
-        })),
-      );
-
-      // First, upload all local images to Cloudinary
-      const damagesWithUploadedImages = await Promise.all(
-        damages.map(async (damage, damageIndex) => {
-          console.log(`📦 [onSubmit] Processing damage ${damageIndex + 1}...`);
-          const uploadedImages = await Promise.all(
-            (damage.images || []).map(async (img, imgIndex) => {
-              // If it's a local image (has is_local flag and uri), upload it
-              if (img.is_local && img.uri) {
-                console.log(
-                  `📸 [onSubmit] Uploading image ${imgIndex + 1} for damage ${
-                    damageIndex + 1
-                  }:`,
-                  img.fileName,
-                );
-                try {
-                  const cloudinaryUrl = await imageApi.uploadImageFile(
-                    img.uri,
-                    img.fileName || `image-${Date.now()}.jpg`,
-                    img.type || 'image/jpeg',
-                  );
-                  console.log(
-                    `✅ [onSubmit] Image ${imgIndex + 1} uploaded:`,
-                    cloudinaryUrl,
-                  );
-                  return cloudinaryUrl;
-                } catch (uploadError) {
-                  console.error(
-                    `❌ [onSubmit] Failed to upload image ${imgIndex + 1}:`,
-                    uploadError,
-                  );
-                  throw new Error(
-                    `Không thể upload ảnh: ${img.fileName}. Vui lòng thử lại.`,
-                  );
-                }
-              }
-              // If it's already uploaded, use the existing URL
-              console.log(
-                `⏭️  [onSubmit] Skipping already uploaded image ${
-                  imgIndex + 1
-                }`,
-              );
-              return img.image_url || '';
-            }),
-          );
-
-          return {
-            ...damage,
-            images: uploadedImages,
-          };
-        }),
-      );
-
-      // Transform damages to match backend API (uses camelCase)
-      const transformedDamages = damagesWithUploadedImages.map(damage => ({
-        damagePosition: damage.damage_position,
-        damageType: damage.damage_type,
-        severity: damage.severity,
-        description: damage.description,
-        repairMethod: damage.repair_method,
-        images: (damage.images || []).filter(url => !!url),
-      }));
-
-      const resolvedSurveyorId = isAdmin ? values.surveyor_id : currentUserId;
-
-      if (!resolvedSurveyorId) {
-        Alert.alert('Lỗi', 'Không xác định được người giám định');
-        return;
-      }
-
-      const payload = {
-        id: inspectionId,
-        container_id: values.container_id,
-        surveyor_id: resolvedSurveyorId,
-        inspection_code: values.inspection_code,
-        inspection_date: values.inspection_date,
-        expected_updated_at: data?.updated_at,
-        result: values.result,
-        note: values.note,
-        damages: transformedDamages,
-      };
-
-      const res = await saveDraftMutation.submit(payload);
-
-      Alert.alert('Thành công', 'Lưu giám định thành công');
 
       if (!inspectionId && res?.id) {
         navigation.replace('InspectionDetailScreen', {inspectionId: res.id});
@@ -242,19 +283,34 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
     }
   };
 
-  const onComplete = async () => {
-    if (!inspectionId) {
-      Alert.alert('Thông báo', 'Bạn cần lưu giám định trước khi hoàn tất');
-      return;
-    }
-
+  const onComplete = async (values: InspectionFormValues) => {
     try {
-      await completeMutation.submit(inspectionId, {
-        expected_updated_at: data?.updated_at,
+      const savedInspection = await persistCurrentInspection(values, {
+        showSuccessAlert: false,
       });
+
+      if (!savedInspection?.id) {
+        Alert.alert('Lỗi', 'Không thể hoàn tất giám định do thiếu mã giám định');
+        return;
+      }
+
+      const completedInspection = await completeMutation.submit(
+        savedInspection.id,
+        {
+          expected_updated_at: savedInspection.updated_at,
+        },
+      );
+
       Alert.alert('Thành công', 'Đã hoàn tất giám định');
-      refetch();
-      scrollToTop();
+
+      if (!inspectionId) {
+        navigation.replace('InspectionDetailScreen', {
+          inspectionId: completedInspection.id,
+        });
+      } else {
+        refetch();
+        scrollToTop();
+      }
     } catch (error: any) {
       if (
         error instanceof ApiError &&
@@ -330,6 +386,7 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
           <MButton
             title="Lưu giám định"
             loading={saveDraftMutation.loading}
+            disabled={completeMutation.loading}
             onPress={handleSubmit(onSubmit)}
           />
 
@@ -338,8 +395,8 @@ const InspectionDetailScreen: React.FC<Props> = ({route, navigation}) => {
           <MButton
             title="Hoàn tất giám định"
             variant="danger"
-            loading={completeMutation.loading}
-            onPress={onComplete}
+            loading={saveDraftMutation.loading || completeMutation.loading}
+            onPress={handleSubmit(onComplete)}
           />
         </View>
       )}
