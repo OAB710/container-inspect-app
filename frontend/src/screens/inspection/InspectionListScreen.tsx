@@ -12,7 +12,6 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import MainLayout from '../../components/MainLayout';
 import MLoading from '../../components/MLoading';
 import MEmpty from '../../components/MEmpty';
-import MButton from '../../components/MButton';
 import MStatusBadge from '../../components/MStatusBadge';
 import {InspectionStackParamList} from '../../types/navigations/inspection-navigation';
 import {useInspectionList} from '../../queries/useInspection';
@@ -29,6 +28,7 @@ const InspectionListScreen: React.FC<Props> = ({navigation}) => {
   const logout = useAuthStore(state => state.logout);
   const user = useAuthStore(state => state.user);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [fabHintVisible, setFabHintVisible] = useState(false);
 
   const displayName =
     typeof user?.full_name === 'string' && user.full_name.trim()
@@ -142,7 +142,7 @@ const InspectionListScreen: React.FC<Props> = ({navigation}) => {
       {isInitialLoading ? (
         <MLoading />
       ) : (
-        <View>
+        <View style={{flex: 1}}>
           <FlatList
             data={data}
             keyExtractor={item => String(item.id)}
@@ -151,10 +151,11 @@ const InspectionListScreen: React.FC<Props> = ({navigation}) => {
             ListEmptyComponent={renderListEmpty}
             contentContainerStyle={
               data.length === 0
-                ? {flexGrow: 1, justifyContent: 'center'}
+                ? {flexGrow: 1, justifyContent: 'center', paddingBottom: 120}
                 : undefined
             }
             ItemSeparatorComponent={() => <View style={{height: 12}} />}
+            style={{flex: 1}}
             renderItem={({item}) => (
               <TouchableOpacity
                 style={inspectionListStyle.card}
@@ -187,11 +188,31 @@ const InspectionListScreen: React.FC<Props> = ({navigation}) => {
           />
 
           {!error && (
-            <View style={inspectionListStyle.createButtonWrap}>
-              <MButton
-                title="Tạo mới giám định"
+            <View style={inspectionListStyle.fabWrap} pointerEvents="box-none">
+              {fabHintVisible && (
+                <View style={inspectionListStyle.fabHint}>
+                  <Text style={inspectionListStyle.fabHintText}>
+                    Tạo giám định
+                  </Text>
+                </View>
+              )}
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Tạo giám định"
                 onPress={() => navigation.navigate('InspectionDetailScreen')}
-              />
+                onPressIn={() => setFabHintVisible(true)}
+                onPressOut={() => setFabHintVisible(false)}
+                onLongPress={() => setFabHintVisible(true)}
+                style={({pressed}) => [
+                  inspectionListStyle.fabButton,
+                  pressed && inspectionListStyle.fabButtonPressed,
+                ]}>
+                <View style={inspectionListStyle.fabIcon}>
+                  <View style={inspectionListStyle.fabIconHorizontal} />
+                  <View style={inspectionListStyle.fabIconVertical} />
+                </View>
+              </Pressable>
             </View>
           )}
         </View>
