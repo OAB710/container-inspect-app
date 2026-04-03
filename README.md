@@ -2,6 +2,12 @@
 
 BCIA is a mobile app for container inspection. Inspectors can create inspections, add damages, upload photos, and complete inspection workflows through a React Native app connected to a NestJS API.
 
+<p align="center">
+  <img width="32%" alt="Login Screen" src="https://github.com/user-attachments/assets/c4e0277a-3c58-4c51-bc4b-8a5a5fc04a23" />
+  <img width="32%" alt="Inspection Screen" src="https://github.com/user-attachments/assets/211b889b-1d1e-4b8f-a34d-f16ef4ea0399" />
+  <img width="32%" alt="Inspection Detail Screen" src="https://github.com/user-attachments/assets/a4a41472-910b-4845-91f1-a736368e9822" />
+</p>
+
 ## Project Structure
 
 - `frontend`: React Native mobile app (Android/iOS)
