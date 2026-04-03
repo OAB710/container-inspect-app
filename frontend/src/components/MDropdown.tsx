@@ -96,10 +96,7 @@ const MDropdown = <T extends FieldValues>({
       name={name}
       rules={rules}
       render={({field: {onChange, value}, fieldState: {error}}) => {
-        const selectedLabel = useMemo(() => {
-          const found = options.find(item => item.value === value);
-          return found?.label || '';
-        }, [options, value]);
+        const selectedLabel = options.find(item => item.value === value)?.label || '';
 
         return (
           <View style={styles.wrapper}>
@@ -153,8 +150,8 @@ const MDropdown = <T extends FieldValues>({
                     placeholderTextColor={AppColors.textSecondary}
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    autoCorrect={false}
-                    spellCheck={false}
+                    autoCorrect
+                    spellCheck
                   />
 
                   <ScrollView

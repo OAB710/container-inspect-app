@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Alert} from 'react-native';
+import {Alert, Linking, PermissionsAndroid, Platform} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useForm} from 'react-hook-form';
 import * as ImagePicker from 'react-native-image-picker';
@@ -47,6 +47,49 @@ const DamageFormScreen: React.FC<Props> = ({navigation, route}) => {
     }));
   };
 
+  const ensureAndroidCameraPermission = async () => {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+
+    const granted = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+    );
+
+    if (granted) {
+      return true;
+    }
+
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: 'Quyền camera',
+        message: 'Ứng dụng cần quyền camera để chụp ảnh hư hỏng.',
+        buttonPositive: 'Cho phép',
+        buttonNegative: 'Từ chối',
+      },
+    );
+
+    if (result === PermissionsAndroid.RESULTS.GRANTED) {
+      return true;
+    }
+
+    if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+      Alert.alert(
+        'Thiếu quyền camera',
+        'Bạn đã chặn quyền camera. Vui lòng bật lại trong cài đặt ứng dụng.',
+        [
+          {text: 'Đóng', style: 'cancel'},
+          {text: 'Mở cài đặt', onPress: () => Linking.openSettings()},
+        ],
+      );
+      return false;
+    }
+
+    Alert.alert('Thiếu quyền camera', 'Bạn cần cấp quyền camera để chụp ảnh.');
+    return false;
+  };
+
   const handlePickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibrary({
@@ -65,14 +108,33 @@ const DamageFormScreen: React.FC<Props> = ({navigation, route}) => {
 
   const handleOpenCamera = async () => {
     try {
+      const hasPermission = await ensureAndroidCameraPermission();
+      if (!hasPermission) {
+        return;
+      }
+
       const result = await ImagePicker.launchCamera({
         mediaType: 'photo',
-        saveToPhotos: true,
+        saveToPhotos: false,
       });
 
       if (result.didCancel) return;
 
+      if (result.errorCode) {
+        Alert.alert(
+          'Không thể chụp ảnh',
+          result.errorMessage || `Lỗi camera: ${result.errorCode}`,
+        );
+        return;
+      }
+
       const mappedImages = mapAssetsToImages(result.assets);
+
+      if (mappedImages.length === 0) {
+        Alert.alert('Không thể chụp ảnh', 'Không nhận được ảnh từ camera.');
+        return;
+      }
+
       setImages(prev => [...prev, ...mappedImages]);
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể chụp ảnh');

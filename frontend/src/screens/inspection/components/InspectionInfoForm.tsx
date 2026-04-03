@@ -121,7 +121,7 @@ const InspectionInfoForm: React.FC<InspectionInfoFormProps> = ({
           name="inspection_date"
           label="Ngày giám định"
           required
-          disabled={readonly}
+          disabled={true}
         />
 
         <MTextArea
@@ -214,7 +214,7 @@ const InspectionInfoForm: React.FC<InspectionInfoFormProps> = ({
         name="inspection_date"
         label="Ngày giám định"
         required
-        disabled={readonly}
+        disabled={true}
       />
 
       <MTextArea

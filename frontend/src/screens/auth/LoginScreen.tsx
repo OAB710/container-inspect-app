@@ -22,19 +22,26 @@ type LoginForm = {
   confirmPassword: string;
 };
 
+const EMPTY_FORM: LoginForm = {
+  username: '',
+  password: '',
+  fullName: '',
+  email: '',
+  confirmPassword: '',
+};
+
 const LoginScreen: React.FC = () => {
-  const [form, setForm] = useState<LoginForm>({
-    username: '',
-    password: '',
-    fullName: '',
-    email: '',
-    confirmPassword: '',
-  });
+  const [form, setForm] = useState<LoginForm>(EMPTY_FORM);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore(state => state.setAuth);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const handleToggleMode = () => {
+    setIsRegisterMode(prev => !prev);
+    setForm(EMPTY_FORM);
+  };
 
   const onLogin = async () => {
     if (!form.username.trim() || !form.password.trim()) {
@@ -119,8 +126,6 @@ const LoginScreen: React.FC = () => {
                 onChangeText={text =>
                   setForm(prev => ({...prev, fullName: text}))
                 }
-                autoCorrect={false}
-                spellCheck={false}
                 placeholder="Nhập họ tên"
                 placeholderTextColor={AppColors.textSecondary}
               />
@@ -191,7 +196,7 @@ const LoginScreen: React.FC = () => {
           />
 
           <TouchableOpacity
-            onPress={() => setIsRegisterMode(prev => !prev)}
+            onPress={handleToggleMode}
             disabled={loading}>
             <Text style={styles.switchText}>
               {isRegisterMode

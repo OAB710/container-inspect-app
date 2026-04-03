@@ -29,8 +29,8 @@ const MInput = <T extends FieldValues>({
   rules,
   required = false,
   disabled = false,
-  autoCorrect = false,
-  spellCheck = false,
+  autoCorrect = true,
+  spellCheck = true,
   ...props
 }: MInputProps<T>) => {
   return (

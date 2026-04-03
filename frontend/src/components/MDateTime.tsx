@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import {
   Modal,
@@ -37,11 +37,11 @@ const MDateTime = <T extends FieldValues>({
         required: 'Vui lòng chọn ngày giám định',
       }}
       render={({ field: { onChange, value }, fieldState: { error } }) => {
-        const currentDate = useMemo(() => {
+        const currentDate = (() => {
           if (!value) return new Date();
           const parsed = new Date(value as string);
           return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
-        }, [value]);
+        })();
 
         const displayValue = value
           ? new Date(value as string).toLocaleString('vi-VN')
